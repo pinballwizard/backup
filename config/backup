@@ -1,0 +1,89 @@
+#!/bin/bash
+### BEGIN INIT INFO
+# Provides:          backup
+# Required-Start:    $all
+# Required-Stop:     $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Servers Backup
+# Description:       This file do backup of servers
+### END INIT INFO
+
+# Author: Karbovnichiy Vasiliy <menstenebris@gmail.com>
+
+DESC="Do backup of servers"
+NAME="backup"
+DAEMON="/home/backup/main.py"
+pidfile="/var/run/$NAME.pid"
+k="python2.7 ${DAEMON}"
+prog="backup"
+RETVAL=0
+lockfile="/var/lock/subsys/$NAME"
+
+. /etc/rc.d/init.d/functions
+
+[ -x "$DAEMON" ] || exit 0
+
+start(){
+    echo -n $"Starting $prog:"
+    daemon --pidfile ${pidfile} ${DAEMON}
+    RETVAL=$?
+    echo
+    [ $RETVAL -eq 0 ] && touch ${lockfile}
+    return $RETVAL
+}
+
+stop()
+{
+    echo -n $"Shutting down $prog: "
+    killproc ${k}
+    RETVAL=$?
+    echo
+    [ $RETVAL -eq 0 ] && rm -f ${lockfile}
+    return $RETVAL
+}
+
+status()
+{
+    daemon --name=$NAME $DAEMON --running
+}
+
+dbrenew()
+{
+    stop
+    echo "Database reload for $NAME daemon: "
+    $DAEMON dbrenew
+}
+
+now()
+{
+    stop
+    echo "Backup has been started right now"
+    $DAEMON now
+}
+
+help()
+{
+    echo "Usage: $NAME start|stop|status|dbrenew" >&2
+}
+
+case "$1" in
+    start)
+	start
+	;;
+    stop)
+	stop
+	;;
+    dbrenew)
+	dbrenew
+	;;
+    status)
+	status
+	;;
+    now)
+	now
+	;;
+    *)
+	help
+	;;
+esac
