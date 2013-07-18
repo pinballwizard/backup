@@ -38,7 +38,7 @@ logger = logging.getLogger('backup')
 logger.setLevel(level=logging.DEBUG)
 mlogger = multiprocessing.get_logger()
 mlogger.setLevel(level=logging.DEBUG)
-loggers = (logger, mlogger)
+loggers = (logger)
 
 def makingpath(server):
     backupdir = os.path.join(env_dict['store'], server.operator, server.name, str(datetime.date.today()))
@@ -243,9 +243,10 @@ class MyDaemon(utils.Daemonize):
             if (hour_now >= timeline[0]) and (hour_now <= timeline[1]):
                 try:
                     self.logger_init()
-                    logger.info('Starting new session')
+                    logger.info('starting new session')
                     self.log_cleaner()
                     self.checking_state(self.name)
+                    logger.info('session end')
                 except Exception as e:
                     err_str = 'caught unknown exception: %s: %s /n %s' % (e.__class__, e, Exception.message)
                     logger.critical(err_str)
