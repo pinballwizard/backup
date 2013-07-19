@@ -36,9 +36,10 @@ pidfile = "/var/run/backup.pid"
 #  Настройка модуля logging
 logger = logging.getLogger('backup')
 logger.setLevel(level=logging.DEBUG)
-mlogger = multiprocessing.get_logger()
-mlogger.setLevel(level=logging.DEBUG)
-loggers = (logger)
+# mlogger = multiprocessing.get_logger()
+# mlogger.setLevel(level=logging.DEBUG)
+loggers = (logger,)
+
 
 def makingpath(server):
     backupdir = os.path.join(env_dict['store'], server.operator, server.name, str(datetime.date.today()))
@@ -141,12 +142,13 @@ class do_backup(object):
     def file_backup(self):
         self.check_size = self.connection.check_file_size()
         if self.check_size is True:
-            watcher_event = Event()
-            self.prisoner = Process(target=self.rsync_launcher, args=(watcher_event,))
+            self.connection.get_file_rsync(self.prev_backup_path, self.backup)
+#             watcher_event = Event()
+#             self.prisoner = Process(target=self.rsync_launcher, args=(watcher_event,))
 #             self.watcher = Process(target=self.rsync_destroyer, args=(watcher_event,))
-            self.prisoner.start()
+#             self.prisoner.start()
 #             self.watcher.start()
-            self.prisoner.join()
+#             self.prisoner.join()
 #             self.watcher.join()
             logger.info('[%s] creating file backup complete' % self.server.name)
         else:
@@ -156,7 +158,7 @@ class do_backup(object):
     def rsync_launcher(self, watcher_event):
         watcher_event.set()
         self.connection.get_file_rsync(self.prev_backup_path, self.backup)
-#         self.watcher.terminate()
+        self.watcher.terminate()
     
     def rsync_destroyer(self, watcher_event):
         t = 60
@@ -206,10 +208,12 @@ class MyDaemon(utils.Daemonize):
         log_path = os.path.join(env_dict['log'], '%s.log' % (str(datetime.date.today())))
         log_handler = logging.FileHandler(log_path)
         log_handler.setFormatter(formatter)
+        log_handler.setLevel(level=logging.DEBUG)
         
         def lo(dlogger):
             current_handlers = dlogger.handlers[:]
-            [dlogger.removeHandler(n) for n in current_handlers]
+#             [dlogger.removeHandler(h) for h in current_handlers]
+            [h.close() for h in current_handlers]
             dlogger.addHandler(log_handler)
             dlogger.debug('number of logger handlers were removed = %s' % len(current_handlers))
             dlogger.debug('number of logger handlers now = %s' % len(dlogger.handlers[:]))
@@ -236,7 +240,7 @@ class MyDaemon(utils.Daemonize):
     
     def wait_for_midnight(self):
         sleeptime = 600 # Время ожидания до повторной проверки
-        timeline = [8,22] # Интервал работы в 24-x часовом формате
+        timeline = [2,6] # Интервал работы в 24-x часовом формате
         self.daemonize(pidfile)
         while True:
             hour_now = datetime.datetime.now().hour
@@ -320,6 +324,7 @@ class MyDaemon(utils.Daemonize):
                     for backup in backup_match:
                         self._delete_old(backup, server)
                         self._packing_old(backup, server)
+
 
 if __name__ == "__main__":
     d = MyDaemon()

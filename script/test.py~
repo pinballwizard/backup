@@ -1,0 +1,130 @@
+#!/usr/bin/env python2.7
+# -*- coding: utf-8 -*-
+'''
+Created on 14.03.2013
+
+@author: vasiliy
+'''
+
+# from modules import utils
+import os
+import sys
+import datetime
+import time
+# import sys
+import threading
+# import re
+# import shutil
+# import rdiff_backup
+# import logging
+  
+# import ConfigParser
+# configPath = u"/home/datastore/config/config.ini"
+# config = ConfigParser.ConfigParser()
+# config.read(configPath)
+# for s in config.sections():
+# #     config.remove_option(s, 'path')
+#     config.set(s,'tbr','1')
+# with open(configPath, 'wb') as configfile:
+#         config.write(configfile)
+#         
+# import database
+# dbpath = u"/home/datastore/database.db"
+# backup_table = u"backup"
+# backup1 = {'name':'s2v02n', 'backuptype':'file', 'realsize':-1, 'realpath':'/home/vasiliy/', 'makingtime':'01.04.2013', 'last':1}
+# dbc1 = database.DB(dbpath)
+# dbc1.execute(u'''INSERT INTO %s (host_name, backuptype, real_size, making_time, real_path, last) 
+#                     VALUES(:name, :backuptype, :realsize, :makingtime, :realpath, :last)''' % (backup_table), backup1)
+# dbc1.commit()
+# dbc1.close()
+
+# open("/home/datastore/alert1", "w+")
+
+# 
+# d = "total size is 60580  speedup is 56.04"
+# a = re.findall("is .*  ", d)
+# print float(a[0][3:-2])
+
+# timeline = datetime.time(00)
+# print datetime.datetime.now().hour == timeline.hour
+
+
+# def writer(x, event_for_wait, event_for_set):
+#     for i in xrange(10):
+#         event_for_wait.wait() # wait for event
+#         event_for_wait.clear() # clean event for future
+#         print x
+#         time.sleep(0.5)
+#         event_for_set.set() # set event for neighbor thread
+# 
+# # init events
+# e1 = threading.Event()
+# e2 = threading.Event()
+# 
+# # init threads
+# t1 = threading.Thread(target=writer, args=(0, e1, e2))
+# t2 = threading.Thread(target=writer, args=(1, e2, e1))
+# 
+# # start threads
+# t1.start()
+# t2.start()
+# 
+# e1.set() # initiate the first event
+# 
+# # join threads to the main thread
+# t1.join()
+# t2.join()
+
+# from multiprocessing import Process
+# 
+# def f(name):
+#     n=0
+#     while True:
+#         n += 1
+#         print 'hello', name
+#         time.sleep(1)
+#          
+#  
+# def s():
+#     while True:
+#         time.sleep(1)
+#         print 'great'
+#  
+# def h():
+#     time.sleep(1)
+# #     p.terminate()
+# 
+# if __name__ == '__main__':
+#     p = Process(target=f, args=('bob',))
+#     g = Process(target=h)
+# #     d = Process(target=s, args=())
+#     p.daemon = True
+#     p.start()
+#     g.start()
+#     g.join()
+# #     sys.exit(0)
+# #     g.terminate()
+# pid = os.fork()
+# print pid
+# if pid > 0:
+#     sys.exit(0)
+# 
+# os.chdir("/")
+# os.setsid()
+# os.umask(0)
+# 
+# sys.stdout.flush()
+# sys.stderr.flush()
+# si = file('/dev/null', 'r')
+# so = file('/dev/null', 'a+')
+# se = file('/dev/null', 'a+', 0)
+# os.dup2(si.fileno(), sys.stdin.fileno())
+# os.dup2(so.fileno(), sys.stdout.fileno())
+# os.dup2(se.fileno(), sys.stderr.fileno())
+# 
+# 
+# while True:
+#     print "hello"
+#     time.sleep(2)
+
+print os.listdir()

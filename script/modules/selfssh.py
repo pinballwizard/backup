@@ -64,7 +64,7 @@ class Connection(DefConnection):
     def get_file_rsync(self, prev_backup_path, backup):
         include_string = " ".join(["%s@%s:%s" % (self.server.user, self.server.host, n) for n in self.server.include.split(';')])
         exclude_string = " ".join(["--exclude=%s" % (n) for n in self.server.exclude.split(';')])
-        delta_backup_path = os.path.join(backup.realpath, u'delta')
+#         delta_backup_path = os.path.join(backup.realpath, u'delta')
         
         if prev_backup_path is not None:
             rsync = '''rsync -vrpmgoztWRl --rsh="sshpass -p '%s' ssh -p %s"''' % (self.server.secret, self.server.port)

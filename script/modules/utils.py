@@ -81,7 +81,7 @@ class Daemonize(object):
             pid = os.fork()
             if pid > 0:
                 sys.exit(0)
-        except OSError, e:
+        except OSError as e:
             sys.stderr.write("fork failed: %d (%s)\n" % (e.errno, e.strerror))
             sys.exit(1)
         os.chdir("/")
