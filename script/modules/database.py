@@ -15,7 +15,6 @@ from utils import dt
 
 logger = logging.getLogger('backup')
 
-
 class DefDB(object):
     def __init__(self,dbpath = "database.db"):
         self.dbpath = dbpath
@@ -75,10 +74,7 @@ class DB(DefDB):
                         maxsize REAL,
                         file_flag INTEGER,
                         schema_flag INTEGER,
-                        remote_flag INTEGER,
-                        lifetime REAL,
-                        ltbp REAL,
-                        tbr REAL
+                        remote_flag INTEGER
                         )''')
             self.execute('''CREATE TABLE IF NOT EXISTS backup (
                         name TEXT,
@@ -86,6 +82,7 @@ class DB(DefDB):
                         schema_size REAL,
                         makingtime TEXT,
                         realpath TEXT,
+                        kind TEXT,
                         UNIQUE(name,makingtime)
                         FOREIGN KEY(name) REFERENCES hosts(name)
                         )''')
@@ -120,10 +117,10 @@ class currentDB(DB):
     def init(self, name = None):
         t1 = time.time()
         if name is not None:
-            where = u'WHERE name = "%s"' % (name)
+            where = 'WHERE name = "%s"' % (name)
         else:
-            where = u''
-        f = lambda table: [dict(zip(string.keys(),string)) for string in self.execute(u"SELECT * FROM %s %s" % (table, where)).fetchall()]
+            where = ''
+        f = lambda table: [dict(zip(string.keys(),string)) for string in self.execute("SELECT * FROM %s %s" % (table, where)).fetchall()]
         server = [userclass.server(**string) for string in f(self.host_table)]
         backup = [userclass.backup(**string) for string in f(self.backup_table)]
         t2 = time.time()

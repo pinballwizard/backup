@@ -1,1 +1,1 @@
-__all__ = ['database', 'selfssh', 'utils', 'userclass']
+__all__ = ['database', 'selfssh', 'utils', 'userclass','exceptions']

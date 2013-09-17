@@ -21,6 +21,7 @@ dt = lambda x,y: " in %s min" % (str((y-x)/60))
 
 date_cmp = lambda x,y: datetime.date.today() >= x + datetime.timedelta(days=y)
 
+
 class config:
     def __init__(self, configPath):
         self.configPath = configPath
@@ -44,7 +45,10 @@ class config:
         for section in self.config.sections():
             self.config.remove_option(section, name)
         self._config_save()
-        
+    
+    def config_read(self):
+        self.config.s
+    
     def config_parse(self):
         l = lambda x: userclass.server(**dict(self.config.items(x)))
         serverList = [l(s) for s in self.config.sections()]
@@ -55,25 +59,23 @@ class config:
             self.config.write(configfile)
             logger.info("Configuration file successfully updated")
 
-class timer:
-    
-    def __init__(self):
-        self.t1 = 0
-        self.t2 = 0
-    
-    def __str__(self):
-        return "complete in %s min" % (str((self.t2-self.t1)/60))
-    
-    def start(self):
-        self.t1 += time.time()
-    
-    def stop(self):
-        self.t2 += time.time()
-    
-    def timer(self, function, *arg):
-        self.start()
-        function(*arg)
-        self.stop()
+def timer2(fn):
+    deltat = lambda x,y: (y-x)/60
+    def wrapped(*arg):
+        t1 = time.time()
+        fn(*arg)
+        t2 = time.time()
+        return deltat(t1,t2)
+    return wrapped
+
+def timer3(fn):
+    deltat = lambda x,y: (y-x)/60
+    def wrapped(*arg):
+        t1 = time.time()
+        fn(*arg)
+        t2 = time.time()
+        print "in %s min" % str(deltat(t1,t2))
+    return wrapped
 
 class Daemonize(object):
     def _make_pid(self):
@@ -84,6 +86,7 @@ class Daemonize(object):
         except OSError as e:
             sys.stderr.write("fork failed: %d (%s)\n" % (e.errno, e.strerror))
             sys.exit(1)
+            
         os.chdir("/")
         os.setsid()
         os.umask(0)
@@ -117,14 +120,6 @@ def getFolderSize(folder):
         elif os.path.isdir(itempath):
             total_size += getFolderSize(itempath)
     return total_size
-
-def path_decode(path):
-    for path, dirs, files in os.walk(path):
-        for name in files:
-            n = os.path.join(path, name)
-            ne = n.decode("cp1251").encode("UTF-8")
-            os.rename(n, ne)
-    del dirs
 
 def tarFolder(path):
     '''

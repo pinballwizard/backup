@@ -61,26 +61,21 @@ class DefConnection(object):
         self.client.close()
     
 class Connection(DefConnection):
-    def get_file_rsync(self, prev_backup_path, backup):
+    def get_file_rsync(self, prev_backup, backup):
         include_string = " ".join(["%s@%s:%s" % (self.server.user, self.server.host, n) for n in self.server.include.split(';')])
         exclude_string = " ".join(["--exclude=%s" % (n) for n in self.server.exclude.split(';')])
-#         delta_backup_path = os.path.join(backup.realpath, u'delta')
         
-        if prev_backup_path is not None:
-            rsync = '''rsync -vrpmgoztWRl --rsh="sshpass -p '%s' ssh -p %s"''' % (self.server.secret, self.server.port)
-#             rsync = '''rsync -vrpmgoztWRl --force --delete --delete-excluded --backup --backup-dir="%s" --rsh="sshpass -p '%s' ssh -p %s"''' % (delta_backup_path, self.server.secret, self.server.port)
-        else:
+        if backup.kind == 'full':
             utils.makingPath(backup.file_path)
             rsync = '''rsync -vrpmgoztWRl --rsh="sshpass -p '%s' ssh -p %s"''' % (self.server.secret, self.server.port)
-        
-        command = " ".join([rsync, include_string, exclude_string, backup.file_path])
-        logger.debug("[%s] executing %s" % (self.server.name, command))
+            command = " ".join([rsync, include_string, exclude_string, backup.file_path])
+        else:
+            rsync = '''rsync -vrpmgoztWRl --force --delete --delete-excluded --backup --backup-dir=%s --rsh="sshpass -p '%s' ssh -p %s"''' % (backup.file_path, self.server.secret, self.server.port)
+            command = " ".join([rsync, include_string, exclude_string, prev_backup.file_path])
+
+        logger.debug("[%s] %s" % (self.server.name, command))
         answ = subprocess.Popen(command, shell = True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         print (answ.stdout.read())
-#         logger.debug(answ.stderr.read())
-#         err = answ.stderr.read()
-#         if err != '':
-#             logger.warning(answ.stderr.read())
         logger.info("[%s] synchronize files complete" % (self.server.name))
         return answ
      
@@ -107,10 +102,10 @@ class Connection(DefConnection):
         if self.server.remote_flag == 1:
             self.exec_command("mkdir -p %s" % schema_dir)
             if (self.server.ora_sys is not None) or (self.server.ora_sys != ""):
-                logger.debug('[%s] executing %s' % (self.server.name, sys_save_table))
+                logger.debug('[%s] %s' % (self.server.name, sys_save_table))
                 self.exec_command(sys_save_table)
             else:
-                [logger.debug('[%s] executing %s' % self.server.name, table) for table in save_table]
+                [logger.debug('[%s] %s' % self.server.name, table) for table in save_table]
                 [self.exec_command(table) for table in save_table]
             try:
                 self.get_dir_sftp(schema_dir, localpath)
@@ -134,29 +129,32 @@ class Connection(DefConnection):
         command = "rsync -vrmWRil --ignore-errors --list-only %s %s '' >> %s" % (include_string, exclude_string, rsync_ans_remote)
         command2 = "cat %s | tail -1" % (rsync_ans_remote)
         
-        logger.debug("[%s] executing %s" % (self.server.name, command))
+        logger.debug("[%s] %s" % (self.server.name, command))
         self.exec_command(command)
-        logger.debug("[%s] executing %s" % (self.server.name, command2))
+        logger.debug("[%s] %s" % (self.server.name, command2))
         answer = self.exec_command(command2)
         
-        self.get_file_sftp(rsync_ans_remote, rsync_ans_local)
-        with open(rsync_ans_local) as f:
-            rs = f.read()
-        self.exec_command("rm %s" % (rsync_ans_remote))
-        os.remove(rsync_ans_local)
+        filesize = float(answer.split()[3])/10**6
+        speedup = answer[:-1].split()[-1]
         
-        try:
-            filesize = float(answer.split()[3])/10**6
-        except Exception as e:
-            logger.error('[%s] connection failed with exception: %s: %s' % (self.server.name, e.__class__, e))
-            return rs
-        
-        logger.info("[%s] total size is %s speedup is %s" % (self.server.name, filesize, answer[:-1].split()[-1]))
+        logger.info("[%s] total size is %s speedup is %s" % (self.server.name, filesize, speedup))
         logger.info("[%s] server maxsize = %s" % (self.server.name, self.server.maxsize))
         
         if filesize > self.server.maxsize:
+            self.get_file_sftp(rsync_ans_remote, rsync_ans_local)
+            with open(rsync_ans_local, 'r') as f:
+                rs = f.read()
+            self.exec_command("rm %s" % (rsync_ans_remote))
+            os.remove(rsync_ans_local)
+            
+            rs_string = rs.split('\n')[1:]
+            dict_file_size = dict([[int(s.split()[1]), s] for s in rs_string if len(s.split()) == 5])
+            top_file_size = sorted(dict_file_size.keys(),reverse = True)[:10]
+            largest_file = '\n'.join([dict_file_size[e] for e in top_file_size])
+            
             log_err = "[%s] exceeded backup size at %s MB" % (self.server.name, (filesize - self.server.maxsize))
             logger.error(log_err)
-            return log_err + "\n\n\n" + rs
+            return log_err + "\n\n" + "top 10 largest file:\n\n" + largest_file + "\n\n" + "whole log:\n\n" + rs
         else:
+            self.exec_command("rm %s" % (rsync_ans_remote))
             return True
